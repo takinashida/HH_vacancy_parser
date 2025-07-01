@@ -111,4 +111,4 @@ class Vacancy(BaseVacancies):
 
     def _num_validator(self, item):
         """Валидатор по целому числу"""
-        return item if isinstance(item, int or float) else 0
+        return item if isinstance(item, (int, float)) else 0

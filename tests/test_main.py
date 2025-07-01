@@ -317,4 +317,4 @@ def test_main(mock_request, mock_input, capsys):
         "Очищаем файл\n"
         "[]\n"
     )
-    os.system(f"del {path}")
+    os.remove(path)
