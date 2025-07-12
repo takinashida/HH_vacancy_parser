@@ -1,7 +1,33 @@
 import psycopg2
+from abc import ABC , abstractmethod
+
+class DatabaseBase(ABC):
+    '''Амстрактный класс для баз данных'''
+    @abstractmethod
+    def create_tables(self):
+        pass
+
+    @abstractmethod
+    def get_all_vacancies(self):
+        pass
+
+    @abstractmethod
+    def get_avg_salary(self):
+        pass
+
+    @abstractmethod
+    def get_vacancies_with_higher_salary(self):
+        pass
+
+    @abstractmethod
+    def get_vacancies_with_keyword(self, user_input):
+        pass
+
 
 class DBManager:
-    def __init__(self, dbname, user, password, host, port):
+    '''Подключение к базе данных postgres'''
+    def __init__(self, dbname: str, user: str, password: str, host: str, port: str) -> None:
+        '''Функция инициации'''
         self.conn = psycopg2.connect(
             dbname=dbname,
             user=user,
@@ -10,7 +36,10 @@ class DBManager:
             port=port)
         self.cur = self.conn.cursor()
 
-    def create_tables(self):
+    def create_tables(self) -> None:
+        """
+        Создает новую схему с таблицами в базе данных
+        """
         self.cur.execute("CREATE SCHEMA IF NOT EXISTS schema_1;")
         self.cur.execute('''CREATE TABLE IF NOT EXISTS schema_1.employer (
             employer_id INT PRIMARY KEY,
@@ -32,7 +61,12 @@ class DBManager:
         );''')
         self.conn.commit()
 
-    def add_information(self, data):
+    def add_information(self, data: list) -> None:
+        """
+        Добавляет данные из списка словарей
+        :data: список  словарей
+        :return: Ничего
+        """
         for vacancy in data:
             if ((vacancy.get("employer") or {}).get("id") or None):
                 self.cur.execute(
@@ -51,11 +85,16 @@ class DBManager:
                              vacancy["published_at"], (vacancy.get("snippet") or {}).get("requirement") or None))
         self.conn.commit()
 
-    def close(self):
+    def close(self) -> None:
+        """Закрывает подключение к базе данных"""
         self.cur.close()
         self.conn.close()
 
-    def get_companies_and_vacancies_count(self):
+    def get_companies_and_vacancies_count(self) -> list:
+        """
+        Запрашивает из базы данных список компаний и количество вакансий для каждой компании
+        :return: Список кортежей с компаниями и количеством их вакансий
+        """
         self.cur.execute('''SELECT employer.employer_name, COUNT(*)
                         FROM schema_1.vacancies
                         JOIN schema_1.employer USING(employer_id)
@@ -63,14 +102,27 @@ class DBManager:
                         ORDER BY COUNT(*) DESC''')
         return self.cur.fetchall()
 
-    def get_all_vacancies(self):
-        self.cur.execute('''SELECT employer.employer_name, vacancy_name, salary_from, currency, vacancies.url 
+    def get_all_vacancies(self) -> list:
+        """
+        Запрашивает из базы данных список вакансий
+        :return: Список кортежей с вакансиями
+        """
+        self.cur.execute('''SELECT employer.employer_name, vacancy_name, CASE
+                    WHEN salary_from!=0 AND salary_to!=0 THEN ROUND((salary_from+salary_to)/2, 0)
+                    WHEN salary_from=0 AND salary_to!=0 THEN salary_to
+                    WHEN salary_from!=0 AND salary_to=0 THEN salary_from
+                    WHEN salary_from=0 AND salary_to=0 THEN 0
+                    END AS avg_salary, currency, vacancies.url 
                         FROM schema_1.vacancies
                         JOIN schema_1.employer USING(employer_id)
-                        ORDER BY salary_from DESC''')
+                        ''')
         return self.cur.fetchall()
 
-    def get_avg_salary(self):
+    def get_avg_salary(self) -> list:
+        """
+        Запрашивает из базы данных список вакансий сортируя их по средней зарплате
+        :return: Список кортежей с отсортированными вакансиями
+        """
         self.cur.execute('''SELECT employer.employer_name, vacancy_name, CASE
                     WHEN salary_from!=0 AND salary_to!=0 THEN ROUND((salary_from+salary_to)/2, 0)
                     WHEN salary_from=0 AND salary_to!=0 THEN salary_to
@@ -82,7 +134,11 @@ class DBManager:
                     ORDER BY avg_salary DESC''')
         return self.cur.fetchall()
 
-    def get_vacancies_with_higher_salary(self):
+    def get_vacancies_with_higher_salary(self) -> list:
+        """
+        Запрашивает из базы данных список вакансий чья средняя зарплата больше чем средняя общая
+        :return: Список кортежей с отсортированными вакансиями
+        """
         self.cur.execute('''WITH case_result AS (SELECT vacancy_id, 
                             CASE
                                 WHEN salary_from!=0 AND salary_to!=0 THEN ROUND((salary_from+salary_to)/2, 0)
@@ -101,11 +157,20 @@ class DBManager:
         return self.cur.fetchall()
 
 
-    def get_vacancies_with_keyword(self, user_input):
-        self.cur.execute('''SELECT employer.employer_name, vacancy_name, salary_from, currency, vacancies.url 
+    def get_vacancies_with_keyword(self, user_input: str) -> list:
+        """
+        Запрашивает из базы данных список вакансий фильтруя их по ключевому слову в назнании
+        :return: Список кортежей с отфильтрованными вакансиями
+        """
+        self.cur.execute('''SELECT employer.employer_name, vacancy_name, CASE
+                    WHEN salary_from!=0 AND salary_to!=0 THEN ROUND((salary_from+salary_to)/2, 0)
+                    WHEN salary_from=0 AND salary_to!=0 THEN salary_to
+                    WHEN salary_from!=0 AND salary_to=0 THEN salary_from
+                    WHEN salary_from=0 AND salary_to=0 THEN 0
+                    END AS avg_salary, currency, vacancies.url 
                         FROM schema_1.vacancies
                         JOIN schema_1.employer USING(employer_id)
                         WHERE vacancy_name LIKE %s
-                        ORDER BY salary_from DESC''', (user_input,))
+                        ORDER BY avg_salary DESC''', (f"%{user_input}%",))
         return self.cur.fetchall()
 

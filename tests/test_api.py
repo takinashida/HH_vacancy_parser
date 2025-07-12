@@ -1,7 +1,5 @@
 from unittest.mock import Mock, patch
-
 import pytest
-
 from src.api import BaseAPI, HeadHunterAPI
 
 
@@ -11,7 +9,7 @@ def test_BaseAPI():
 
 
 @patch("requests.request")
-def test_HeadHunterAPI(mock_request, capsys):
+def test_HeadHunterAPI(mock_request):
     mock_response = Mock()
     mock_response.json.return_value = {"items": [{"Я": "Барабун"}, {"Ты": "Какун"}]}
     mock_response.status_code = 200
