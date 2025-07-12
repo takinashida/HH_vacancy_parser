@@ -1,12 +1,15 @@
+import os
 from pathlib import Path
+
 import psycopg2
+from dotenv import load_dotenv
+
 from config import ROOT_DIR
 from src.api import HeadHunterAPI
 from src.database_manager import DBManager
 from src.saver import JsonSaver
 from src.vacancies import Vacancy
-from dotenv import load_dotenv
-import os
+
 
 def main() -> None:
     """
@@ -27,16 +30,24 @@ def main() -> None:
     print("Получаем данные с HH.ru")
     vacancy = HeadHunterAPI(text, end_page)
     load_dotenv()
-    pg_database = DBManager(os.getenv("DB_NAME"),os.getenv("DB_USER"),os.getenv("DB_PASSWORD"),os.getenv("DB_HOST"),os.getenv("DB_PORT"))
+    pg_database = DBManager(
+        os.getenv("DB_NAME"),
+        os.getenv("DB_USER"),
+        os.getenv("DB_PASSWORD"),
+        os.getenv("DB_HOST"),
+        os.getenv("DB_PORT"),
+    )
     pg_database.create_tables()
     pg_database.add_information(vacancy.get_vacancies())
     while True:
-        user_choice = input('''Выберите действие из списка(1 - 5):
+        user_choice = input(
+            """Выберите действие из списка(1 - 5):
             1. Получить список всех компаний и количество вакансий у каждой компании.
             2. Получить список всех вакансий с указанием названия компании, названия вакансии и зарплаты и ссылки на вакансию.
             3. Получить среднюю зарплату по вакансиям.
             4. Получить список всех вакансий, у которых зарплата выше средней по всем вакансиям.
-            5. Получить список всех вакансий, в названии которых содержатся переданные в метод слова, например python.\n''')
+            5. Получить список всех вакансий, в названии которых содержатся переданные в метод слова, например python.\n"""
+        )
         if not user_choice.isdigit():
             print(f"Выберите действие (число от 1 до 5), вы ввели: {user_choice}")
         else:
@@ -57,10 +68,6 @@ def main() -> None:
         key_word = input("Введите слово искомое в названии вакансии: ")
         print(pg_database.get_vacancies_with_keyword(key_word))
     pg_database.close()
-
-
-
-
 
 
 if __name__ == "__main__":

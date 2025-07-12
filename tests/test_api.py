@@ -1,5 +1,7 @@
 from unittest.mock import Mock, patch
+
 import pytest
+
 from src.api import BaseAPI, HeadHunterAPI
 
 

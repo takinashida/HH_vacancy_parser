@@ -1,6 +1,8 @@
 import os
 from unittest.mock import Mock, patch
+
 from src.main import main
+
 
 @patch("src.main.DBManager")
 @patch("builtins.input")
@@ -12,7 +14,7 @@ def test_main(mock_getenv, mock_request, mock_input, mock_dbmanager, capsys):
         "DB_USER": "postgres",
         "DB_PASSWORD": "12345",
         "DB_HOST": "localhost",
-        "DB_PORT": "5432"
+        "DB_PORT": "5432",
     }.get(key, default)
 
     mock_response = Mock()
@@ -32,30 +34,32 @@ def test_main(mock_getenv, mock_request, mock_input, mock_dbmanager, capsys):
     mock_input.side_effect = ["Some", "one", "101", "1", "Some", "one", "101", "2"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == ('Количество страниц должно быть числом, вы ввели: one\n'
- 'Число должно быть от 0 до 20, вы ввели: 101\n'
- 'Получаем данные с HH.ru\n'
- 'Выберите действие (число от 1 до 5), вы ввели: Some\n'
- 'Выберите действие (число от 1 до 5), вы ввели: one\n'
- 'Число должно быть от 1 до 5, вы ввели: 101\n'
- 'FAKE_VACANCIES\n')
+    assert captured.out == (
+        "Количество страниц должно быть числом, вы ввели: one\n"
+        "Число должно быть от 0 до 20, вы ввели: 101\n"
+        "Получаем данные с HH.ru\n"
+        "Выберите действие (число от 1 до 5), вы ввели: Some\n"
+        "Выберите действие (число от 1 до 5), вы ввели: one\n"
+        "Число должно быть от 1 до 5, вы ввели: 101\n"
+        "FAKE_VACANCIES\n"
+    )
 
     mock_input.side_effect = ["Some", "1", "1"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == ('Получаем данные с HH.ru\nFAKE_COMPANIES\n')
+    assert captured.out == ("Получаем данные с HH.ru\nFAKE_COMPANIES\n")
 
     mock_input.side_effect = ["Some", "1", "3"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == ('Получаем данные с HH.ru\nFAKE_AVG\n')
+    assert captured.out == ("Получаем данные с HH.ru\nFAKE_AVG\n")
 
     mock_input.side_effect = ["Some", "1", "4"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == ('Получаем данные с HH.ru\nFAKE_HIGHER\n')
+    assert captured.out == ("Получаем данные с HH.ru\nFAKE_HIGHER\n")
 
     mock_input.side_effect = ["Some", "1", "5", "Python"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == ('Получаем данные с HH.ru\nFAKE_KEYWORD\n')
+    assert captured.out == ("Получаем данные с HH.ru\nFAKE_KEYWORD\n")

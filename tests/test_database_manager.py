@@ -1,9 +1,11 @@
-from unittest.mock import Mock, patch
-import pytest
-from src.database_manager import DatabaseBase, DBManager
 import os
-from dotenv import load_dotenv
 from decimal import Decimal
+from unittest.mock import Mock, patch
+
+import pytest
+from dotenv import load_dotenv
+
+from src.database_manager import DatabaseBase, DBManager
 
 
 def test_DatabaseBase():
@@ -11,16 +13,20 @@ def test_DatabaseBase():
         thing = DatabaseBase()
 
 
-
-
 def test_DB_manager():
-    '''Для данной проверки у вас должна быть создана БД под названием test'''
+    """Для данной проверки у вас должна быть создана БД под названием test"""
     load_dotenv()
-    test_DB = DBManager(dbname = "test", user = os.getenv("DB_USER"), password = os.getenv("DB_PASSWORD"),
-              host = os.getenv("DB_HOST"), port = os.getenv("DB_PORT"))
+    test_DB = DBManager(
+        dbname="test",
+        user=os.getenv("DB_USER"),
+        password=os.getenv("DB_PASSWORD"),
+        host=os.getenv("DB_HOST"),
+        port=os.getenv("DB_PORT"),
+    )
 
     test_DB.create_tables()
-    test_DB.add_information([
+    test_DB.add_information(
+        [
             {
                 "id": "92223870",
                 "premium": False,
@@ -290,83 +296,101 @@ def test_DB_manager():
                 "adv_response_url": None,
                 "is_adv_vacancy": False,
                 "adv_context": None,
-            }
-        ])
-    assert test_DB.get_all_vacancies() == [('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('47000'),
-  None,
-  'https://hh.ru/vacancy/92223870'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный диспетчер чатов (в Яндекс)',
-  Decimal('44000'),
-  'RUR',
-  'https://hh.ru/vacancy/92223756'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('0'),
-  'RUR',
-  'https://hh.ru/vacancy/92223870'),
- ('Вайлдберриз Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Вайлдберриз)',
-  Decimal('0'),
-  None,
-  'https://hh.ru/vacancy/92223870')] != [('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('47000'),
-  None,
-  'https://hh.ru/vacancy/92223870'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный диспетчер чатов (в Яндекс)',
-  Decimal('44000'),
-  'RUR',
-  'https://hh.ru/vacancy/92223756')]
-    assert  test_DB.get_companies_and_vacancies_count() == [('Яндекс Команда для бизнеса', 3), ('Вайлдберриз Команда для бизнеса', 1)]
-    assert  test_DB.get_avg_salary() == [('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('47000'),
-  None),
- ('Яндекс Команда для бизнеса',
-  'Удаленный диспетчер чатов (в Яндекс)',
-  Decimal('44000'),
-  'RUR'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('0'),
-  'RUR'),
- ('Вайлдберриз Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Вайлдберриз)',
-  Decimal('0'),
-  None)]
-    assert test_DB.get_vacancies_with_higher_salary() == [('Яндекс Команда для бизнеса',
-  'Удаленный диспетчер чатов (в Яндекс)',
-  Decimal('44000'),
-  'RUR')]
-    assert test_DB.get_vacancies_with_keyword("Яндекс") == [('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('47000'),
-  None,
-  'https://hh.ru/vacancy/92223870'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный диспетчер чатов (в Яндекс)',
-  Decimal('44000'),
-  'RUR',
-  'https://hh.ru/vacancy/92223756'),
- ('Яндекс Команда для бизнеса',
-  'Удаленный специалист службы поддержки (в Яндекс)',
-  Decimal('0'),
-  'RUR',
-  'https://hh.ru/vacancy/92223870')]
-    test_DB.cur.execute('''DROP TABLE schema_1.vacancies''')
-    test_DB.cur.execute('''DROP TABLE schema_1.employer''')
-    test_DB.cur.execute('''DROP SCHEMA schema_1''')
+            },
+        ]
+    )
+    assert (
+        test_DB.get_all_vacancies()
+        == [
+            (
+                "Яндекс Команда для бизнеса",
+                "Удаленный специалист службы поддержки (в Яндекс)",
+                Decimal("47000"),
+                None,
+                "https://hh.ru/vacancy/92223870",
+            ),
+            (
+                "Яндекс Команда для бизнеса",
+                "Удаленный диспетчер чатов (в Яндекс)",
+                Decimal("44000"),
+                "RUR",
+                "https://hh.ru/vacancy/92223756",
+            ),
+            (
+                "Яндекс Команда для бизнеса",
+                "Удаленный специалист службы поддержки (в Яндекс)",
+                Decimal("0"),
+                "RUR",
+                "https://hh.ru/vacancy/92223870",
+            ),
+            (
+                "Вайлдберриз Команда для бизнеса",
+                "Удаленный специалист службы поддержки (в Вайлдберриз)",
+                Decimal("0"),
+                None,
+                "https://hh.ru/vacancy/92223870",
+            ),
+        ]
+        != [
+            (
+                "Яндекс Команда для бизнеса",
+                "Удаленный специалист службы поддержки (в Яндекс)",
+                Decimal("47000"),
+                None,
+                "https://hh.ru/vacancy/92223870",
+            ),
+            (
+                "Яндекс Команда для бизнеса",
+                "Удаленный диспетчер чатов (в Яндекс)",
+                Decimal("44000"),
+                "RUR",
+                "https://hh.ru/vacancy/92223756",
+            ),
+        ]
+    )
+    assert test_DB.get_companies_and_vacancies_count() == [
+        ("Яндекс Команда для бизнеса", 3),
+        ("Вайлдберриз Команда для бизнеса", 1),
+    ]
+    assert test_DB.get_avg_salary() == [
+        ("Яндекс Команда для бизнеса", "Удаленный специалист службы поддержки (в Яндекс)", Decimal("47000"), None),
+        ("Яндекс Команда для бизнеса", "Удаленный диспетчер чатов (в Яндекс)", Decimal("44000"), "RUR"),
+        ("Яндекс Команда для бизнеса", "Удаленный специалист службы поддержки (в Яндекс)", Decimal("0"), "RUR"),
+        (
+            "Вайлдберриз Команда для бизнеса",
+            "Удаленный специалист службы поддержки (в Вайлдберриз)",
+            Decimal("0"),
+            None,
+        ),
+    ]
+    assert test_DB.get_vacancies_with_higher_salary() == [
+        ("Яндекс Команда для бизнеса", "Удаленный диспетчер чатов (в Яндекс)", Decimal("44000"), "RUR")
+    ]
+    assert test_DB.get_vacancies_with_keyword("Яндекс") == [
+        (
+            "Яндекс Команда для бизнеса",
+            "Удаленный специалист службы поддержки (в Яндекс)",
+            Decimal("47000"),
+            None,
+            "https://hh.ru/vacancy/92223870",
+        ),
+        (
+            "Яндекс Команда для бизнеса",
+            "Удаленный диспетчер чатов (в Яндекс)",
+            Decimal("44000"),
+            "RUR",
+            "https://hh.ru/vacancy/92223756",
+        ),
+        (
+            "Яндекс Команда для бизнеса",
+            "Удаленный специалист службы поддержки (в Яндекс)",
+            Decimal("0"),
+            "RUR",
+            "https://hh.ru/vacancy/92223870",
+        ),
+    ]
+    test_DB.cur.execute("""DROP TABLE schema_1.vacancies""")
+    test_DB.cur.execute("""DROP TABLE schema_1.employer""")
+    test_DB.cur.execute("""DROP SCHEMA schema_1""")
     test_DB.conn.commit()
     test_DB.close()
-
-
-
-
-
-
-
-

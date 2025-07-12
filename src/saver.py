@@ -2,7 +2,6 @@ import json
 from abc import ABC, abstractmethod
 
 
-
 class BaseSaver(ABC):
     """Абстрактный класс всех сейверов"""
 
