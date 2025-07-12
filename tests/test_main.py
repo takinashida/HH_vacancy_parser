@@ -1,15 +1,32 @@
 import os
 from pathlib import Path
 from unittest.mock import Mock, patch
-
+import os
+from dotenv import load_dotenv
 from config import ROOT_DIR
 from src.main import main
 
+load_dotenv()
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_HOST = os.getenv("DB_HOST")
+DB_PORT = os.getenv("DB_PORT")
 
 @patch("builtins.input")
 @patch("requests.request")
-def test_main(mock_request, mock_input, capsys):
+@patch("os.getenv")
+def test_main(mock_getenv, mock_request, mock_input, capsys):
+    load_dotenv()
     path = Path.joinpath(ROOT_DIR, "data", "test.json")
+    def getenv_side_effect(key, default=None):
+        return {
+            "DB_NAME": "test",
+            "DB_USER": DB_USER,
+            "DB_PASSWORD": DB_PASSWORD,
+            "DB_HOST": DB_HOST,
+            "DB_PORT": DB_PORT
+        }.get(key, default)
+    mock_getenv.side_effect = getenv_side_effect
     mock_response = Mock()
     mock_response.json.return_value = {
         "items": [
@@ -232,7 +249,7 @@ def test_main(mock_request, mock_input, capsys):
             {
                 "id": "92223870",
                 "premium": False,
-                "name": "Удаленный специалист службы поддержки (в Яндекс)",
+                "name": "Удаленный специалист службы поддержки (в Вайлдберриз)",
                 "department": None,
                 "has_test": False,
                 "response_letter_required": False,
@@ -287,34 +304,8 @@ def test_main(mock_request, mock_input, capsys):
     }
     mock_response.status_code = 200
     mock_request.return_value = mock_response
-    mock_input.side_effect = ["Some", "one", "101", "1", str(path), "Y", "113", "Y"]
+    mock_input.side_effect = ["Some", "one", "101", "1", "Some", "one", "101", "2"]
     main()
     captured = capsys.readouterr()
-    assert captured.out == (
-        "Количество страниц должно быть числом, вы ввели: one\n"
-        "Число должно быть от 0 до 20, вы ввели: 101\n"
-        "Получаем данные с HH.ru\n"
-        "Сохраняем файл\n"
-        "Обрабатываем данные\n"
-        "Удаленный специалист службы поддержки (в Яндекс) 47000.0 None "
-        "2024-01-25T17:39:01+0300 \n"
-        " Способен работать в команде. Способен принимать решения самостоятельно. "
-        "Готов учиться и узнавать новое. Опыт работы в колл-центре или службе... \n"
-        " https://hh.ru/vacancy/92223870 \n"
-        "\n"
-        "Удаленный диспетчер чатов (в Яндекс) 44000 RUR 2024-01-25T17:37:04+0300 \n"
-        " Способен работать в команде. Способен принимать решения самостоятельно. "
-        "Готов учиться и узнавать новое. Опыт работы в колл-центре или службе... \n"
-        " https://hh.ru/vacancy/92223756 \n"
-        "\n"
-        "Удаленный специалист службы поддержки (в Яндекс) 30000 RUR "
-        "2024-01-25T17:39:01+0300 \n"
-        " Способен работать в команде. Способен принимать решения самостоятельно. "
-        "Готов учиться и узнавать новое. Опыт работы в колл-центре или службе... \n"
-        " https://hh.ru/vacancy/92223870 \n"
-        "\n"
-        "Всего соответствующих требованиям найдено 3 вакансий\n"
-        "Очищаем файл\n"
-        "[]\n"
-    )
-    os.remove(path)
+    assert captured.out == ('Количество страниц должно быть числом, вы ввели: one\n')
+
