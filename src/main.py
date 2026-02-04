@@ -1,7 +1,12 @@
+import os
 from pathlib import Path
+
+import psycopg2
+from dotenv import load_dotenv
 
 from config import ROOT_DIR
 from src.api import HeadHunterAPI
+from src.database_manager import DBManager
 from src.saver import JsonSaver
 from src.vacancies import Vacancy
 
@@ -24,28 +29,45 @@ def main() -> None:
         break
     print("Получаем данные с HH.ru")
     vacancy = HeadHunterAPI(text, end_page)
-    path = input(r"Введите директорию в которой сохраниться файл(по умолчанию \data\vacancies.json): ")
-    if path == "":
-        path = Path.joinpath(ROOT_DIR, "data", "vacancies.json")
-    print("Сохраняем файл")
-    file_vacancy = JsonSaver(path)
-    file_vacancy.json_save(vacancy.get_vacancies())
-    data = file_vacancy.json_load()
-    print("Обрабатываем данные")
-    database = Vacancy.from_list(data)
-    if input("Сортировать вакансии по средней зарплате?(Y/N): ").lower() == "y":
-        database = sorted(database, reverse=True)
-    it = 0
-    area = str(input("Введите id региона который хотите видеть(1: Москва, 113: Россия): "))
-    for i in database:
-        if i.area_id == area and i.avg_salary > 0:
-            it += 1
-            print(i.name, i.avg_salary, i.currency, i.published_at, "\n", i.requirement, "\n", i.url, "\n")
-    print(f"Всего соответствующих требованиям найдено {it} вакансий")
-    if input("Очистить данные?(Y/N): ").lower() == "y":
-        file_vacancy.json_clear()
-        print("Очищаем файл")
-        print(file_vacancy.json_load())
+    load_dotenv()
+    pg_database = DBManager(
+        os.getenv("DB_NAME"),
+        os.getenv("DB_USER"),
+        os.getenv("DB_PASSWORD"),
+        os.getenv("DB_HOST"),
+        os.getenv("DB_PORT"),
+    )
+    pg_database.create_tables()
+    pg_database.add_information(vacancy.get_vacancies())
+    while True:
+        user_choice = input(
+            """Выберите действие из списка(1 - 5):
+            1. Получить список всех компаний и количество вакансий у каждой компании.
+            2. Получить список всех вакансий с указанием названия компании, названия вакансии и зарплаты и ссылки на вакансию.
+            3. Получить среднюю зарплату по вакансиям.
+            4. Получить список всех вакансий, у которых зарплата выше средней по всем вакансиям.
+            5. Получить список всех вакансий, в названии которых содержатся переданные в метод слова, например python.\n"""
+        )
+        if not user_choice.isdigit():
+            print(f"Выберите действие (число от 1 до 5), вы ввели: {user_choice}")
+        else:
+            user_choice = int(user_choice)
+            if not 0 < user_choice <= 5:
+                print(f"Число должно быть от 1 до 5, вы ввели: {user_choice}")
+            else:
+                break
+    if int(user_choice) == 1:
+        print(pg_database.get_companies_and_vacancies_count())
+    elif int(user_choice) == 2:
+        print(pg_database.get_all_vacancies())
+    elif int(user_choice) == 3:
+        print(pg_database.get_avg_salary())
+    elif int(user_choice) == 4:
+        print(pg_database.get_vacancies_with_higher_salary())
+    elif int(user_choice) == 5:
+        key_word = input("Введите слово искомое в названии вакансии: ")
+        print(pg_database.get_vacancies_with_keyword(key_word))
+    pg_database.close()
 
 
 if __name__ == "__main__":
